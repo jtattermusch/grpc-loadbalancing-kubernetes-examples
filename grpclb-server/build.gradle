@@ -1,0 +1,58 @@
+group 'io.grpc'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'com.google.protobuf'
+apply plugin: 'eclipse'
+
+buildscript {
+  repositories {
+    maven {
+      // The google mirror is less flaky than mavenCentral()
+      url "https://maven-central.storage-download.googleapis.com/repos/central/data/"
+    }
+  }
+  dependencies {
+    // ASSUMES GRADLE 2.12 OR HIGHER. Use plugin version 0.7.5 with earlier
+    // gradle versions
+    classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
+  }
+}
+
+repositories {
+  maven {
+      // The google mirror is less flaky than mavenCentral()
+    url "https://maven-central.storage-download.googleapis.com/repos/central/data/"
+  }
+  mavenLocal()
+}
+
+// IMPORTANT: You probably want the non-SNAPSHOT version of gRPC. Make sure you
+// are looking at a tagged version of the example and not "master"!
+
+// Feel free to delete the comment at the next line. It is just for safely
+// updating the version in our release process.
+def grpcVersion = '1.11.0'
+
+dependencies {
+  compile "io.grpc:grpc-netty:${grpcVersion}"
+  compile "io.grpc:grpc-protobuf:${grpcVersion}"
+  compile "io.grpc:grpc-stub:${grpcVersion}"
+}
+
+protobuf {
+  protoc {
+    artifact = "com.google.protobuf:protoc:3.5.1-1"
+  }
+  plugins {
+    grpc {
+      artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+    }
+  }
+  generateProtoTasks {
+    all()*.plugins {
+      grpc {}
+    }
+  }
+}
+
