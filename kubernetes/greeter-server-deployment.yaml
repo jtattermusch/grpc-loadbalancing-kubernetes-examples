@@ -8,6 +8,7 @@ spec:
     metadata:
       labels:
         app: grpclb-demo
+        tier: backend
     spec:
       containers:
       - name: greeter-server

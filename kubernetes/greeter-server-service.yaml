@@ -9,3 +9,4 @@ spec:
   - port: 8000
   selector:
     app: grpclb-demo
+    tier: backend

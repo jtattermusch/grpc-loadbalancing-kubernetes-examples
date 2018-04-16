@@ -21,8 +21,17 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.logging.Logger;
+import java.util.logging.Level;
 
 import grpc.lb.v1.LoadBalancerGrpc;
+import grpc.lb.v1.LoadBalancerOuterClass.LoadBalanceRequest;
+import grpc.lb.v1.LoadBalancerOuterClass.LoadBalanceResponse;
+import grpc.lb.v1.LoadBalancerOuterClass.InitialLoadBalanceResponse;
+import grpc.lb.v1.LoadBalancerOuterClass.ServerList;
+import grpc.lb.v1.LoadBalancerOuterClass.Duration;
+import grpc.lb.v1.LoadBalancerOuterClass;
+import com.google.protobuf.ByteString;
+
 
 /**
  * Server that manages startup/shutdown of a {@code GrpclbServer} server.
@@ -34,7 +43,7 @@ public class GrpclbServer {
 
   private void start() throws IOException {
     /* The port on which the server should run */
-    int port = 50051;
+    int port = 9000;
     server = ServerBuilder.forPort(port)
         .addService(new LoadBalancerImpl())
         .build()
@@ -78,10 +87,46 @@ public class GrpclbServer {
   static class LoadBalancerImpl extends LoadBalancerGrpc.LoadBalancerImplBase {
 
     @Override
-    public io.grpc.stub.StreamObserver<grpc.lb.v1.LoadBalancerOuterClass.LoadBalanceRequest> balanceLoad(
-        io.grpc.stub.StreamObserver<grpc.lb.v1.LoadBalancerOuterClass.LoadBalanceResponse> responseObserver) {
+    public io.grpc.stub.StreamObserver<LoadBalanceRequest> balanceLoad(
+        io.grpc.stub.StreamObserver<LoadBalanceResponse> responseObserver) {
       
-      // TODO: implement
+      
+      return new StreamObserver<LoadBalanceRequest>() {
+
+        private boolean initialResponseSent = false;
+        
+        @Override
+        public void onNext(LoadBalanceRequest req) {
+          logger.log(Level.INFO, "LoadBalanceRequest: " + req);
+          
+          LoadBalanceResponse.Builder builder = LoadBalanceResponse.newBuilder();
+          if (!initialResponseSent) 
+          {
+            builder.setInitialResponse(InitialLoadBalanceResponse.newBuilder()
+                .setClientStatsReportInterval(Duration.newBuilder().setSeconds(10).build())
+                .build());
+            initialResponseSent = true;
+          }
+          // TODO: fill with real servers...
+          builder.setServerList(ServerList.newBuilder()
+              .addServers(LoadBalancerOuterClass.Server.newBuilder()
+                  .setIpAddress(ByteString.copyFrom(new byte[] {10, 0, 0, 24})).setPort(8000).setLoadBalanceToken("abc").build())
+              .addServers(LoadBalancerOuterClass.Server.newBuilder()
+                  .setIpAddress(ByteString.copyFrom(new byte[] {10, 0, 1, 12})).setPort(8000).setLoadBalanceToken("xyz").build())
+              .build());
+          responseObserver.onNext(builder.build());
+        }
+
+        @Override
+        public void onError(Throwable t) {
+          logger.log(Level.WARNING, "balanceLoad cancelled");
+        }
+
+        @Override
+        public void onCompleted() {
+          responseObserver.onCompleted();
+        }
+      };
     }
   }
 }

@@ -15,13 +15,17 @@
 
 PROJECT_NAME=grpc-loadbalancing-demo2018
 
-docker build -t gcr.io/${PROJECT_NAME}/greeter_server ../helloworld-csharp
+docker build -t gcr.io/${PROJECT_NAME}/greeter_server ../helloworld-csharp && docker push gcr.io/${PROJECT_NAME}/greeter_server:latest
 
+
+docker build -t gcr.io/${PROJECT_NAME}/greeter_client ../helloworld-csharp -f ../helloworld-csharp/Dockerfile.client && docker push gcr.io/${PROJECT_NAME}/greeter_client:latest
 
 # Need to run "gcloud auth configure-docker" before we can push the image
 
 docker push gcr.io/${PROJECT_NAME}/greeter_server:latest
 
+
+docker build -t gcr.io/grpc-loadbalancing-demo2018/greeter_server_balancer ../grpclb-server && docker push gcr.io/grpc-loadbalancing-demo2018/greeter_server_balancer:latest 
 
 
 # Previously need to configure via  https://cloud.google.com/container-engine/docs/clusters/operations

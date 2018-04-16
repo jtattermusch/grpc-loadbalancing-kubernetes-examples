@@ -1,14 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: greeter-server2
+  name: greeter-server-loadbalanced
 spec:
   clusterIP: None  # Headless service
-  #type: LoadBalancer  # Loadbalanced
   ports:
-  - name: http
-    port: 8000
   - name: grpclb
-    port: 8123
+    port: 9000
   selector:
     app: grpclb-demo
+    tier: balancer

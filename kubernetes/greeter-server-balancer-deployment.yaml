@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: greeter-server-loadbalanced
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: grpclb-demo
+        tier: balancer
+    spec:
+      containers:
+      - name: greeter-server
+        image: gcr.io/grpc-loadbalancing-demo2018/greeter_server_balancer:latest
+        ports:
+        - containerPort: 9000
+        env:
+        - name: BACKEND_SERVICE_NAME
+          value: "greeter-server"
