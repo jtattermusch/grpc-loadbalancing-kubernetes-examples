@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: greeter-server
+spec:
+  replicas: 5
+  template:
+    metadata:
+      labels:
+        app: grpclb-demo
+    spec:
+      containers:
+      - name: greeter-server
+        image: gcr.io/grpc-loadbalancing-demo2018/greeter_server:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP

@@ -1,0 +1,8 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: greeter-server-ingress
+spec:
+  backend:
+    serviceName: greeter-server
+    servicePort: 8433
