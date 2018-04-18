@@ -60,9 +60,6 @@ public class GrpclbServer {
       }
     });
 
-    //KubernetesApiClient apiClient = new KubernetesApiClient();
-    //loadBalancerImpl.setServerList(apiClient.getEndpointServers("default", "greeter-server"));
-    
     /* The port on which the server should run */
     int port = 9000;
     server = ServerBuilder.forPort(port)
@@ -137,15 +134,7 @@ public class GrpclbServer {
             }
             builder.setServerList(serverListBuilder.build());
           }
-          // 
-          //TODO: fill with real servers...
-          //builder.setServerList(ServerList.newBuilder()
-          //    .addServers(LoadBalancerOuterClass.Server.newBuilder()
-          //        .setIpAddress(ByteString.copyFrom(new byte[] {10, 0, 0, 24})).setPort(8000).setLoadBalanceToken("abc").build())
-          //    .addServers(LoadBalancerOuterClass.Server.newBuilder()
-          //        .setIpAddress(ByteString.copyFrom(new byte[] {10, 0, 1, 12})).setPort(8000).setLoadBalanceToken("xyz").build())
-          //    .build());
-          
+
           responseObserver.onNext(builder.build());
         }
 
