@@ -43,22 +43,9 @@ public class GrpclbServer {
   private Server server;
 
   private void start() throws IOException {
-    final LoadBalancerImpl loadBalancerImpl = new LoadBalancerImpl();
-
+    LoadBalancerImpl loadBalancerImpl = new LoadBalancerImpl();
     KubernetesEndpointWatcher endpointWatcher = new KubernetesEndpointWatcher();
-    endpointWatcher.watchEndpoint("default", "greeter-server", new ServerListWatcher() {
-      
-      @Override
-      public void onUpdate(ImmutableList<InetSocketAddress> serverList) {
-        logger.info("Updating server list: " + serverList);
-        loadBalancerImpl.setServerList(serverList);
-      }
-      
-      @Override
-      public void onClose(Exception e) {
-        logger.warning("Error in endpoint watcher: " + e);
-      }
-    });
+    endpointWatcher.watchEndpoint("default", "greeter-server", loadBalancerImpl);
 
     /* The port on which the server should run */
     int port = 9000;
@@ -102,56 +89,112 @@ public class GrpclbServer {
     server.blockUntilShutdown();
   }
 
-  static class LoadBalancerImpl extends LoadBalancerGrpc.LoadBalancerImplBase {
+  static class LoadBalancerImpl extends LoadBalancerGrpc.LoadBalancerImplBase implements ServerListWatcher {
     
     private ImmutableList<InetSocketAddress> serverList = ImmutableList.of();
+    private EventBroadcaster<Void> eventBroadcaster = new EventBroadcaster<>(); 
+    
+    public LoadBalancerImpl() {
+    }
 
     @Override
     public io.grpc.stub.StreamObserver<LoadBalanceRequest> balanceLoad(
         io.grpc.stub.StreamObserver<LoadBalanceResponse> responseObserver) {
 
-      return new StreamObserver<LoadBalanceRequest>() {
+      BalanceLoadImpl methodImpl = new BalanceLoadImpl(
+          responseObserver,
+          () -> getServerList(),
+          (obj) -> eventBroadcaster.removeListener(obj));
+      eventBroadcaster.addListener(methodImpl);
 
-        private boolean initialResponseSent = false;
+      return methodImpl;
+    }
+    
+    @Override
+    public void onUpdate(ImmutableList<InetSocketAddress> serverList) {
+      logger.info("Updating server list: " + serverList);
+      setServerList(serverList);
+      eventBroadcaster.onUpdate(null);
+    }
 
-        @Override
-        public void onNext(LoadBalanceRequest req) {
-          logger.log(Level.INFO, "LoadBalanceRequest: " + req);
-          
-          LoadBalanceResponse.Builder builder = LoadBalanceResponse.newBuilder();
-          if (!initialResponseSent) 
-          {
-            builder.setInitialResponse(InitialLoadBalanceResponse.newBuilder()
-                .setClientStatsReportInterval(Duration.newBuilder().setSeconds(10).build())
-                .build());
-            initialResponseSent = true;
-          }
-          
-          synchronized(this) {
-            ServerList.Builder serverListBuilder = ServerList.newBuilder();
-            for (InetSocketAddress server : serverList) {
-              serverListBuilder.addServers(getServer(server));
-            }
-            builder.setServerList(serverListBuilder.build());
-          }
-
-          responseObserver.onNext(builder.build());
-        }
-
-        @Override
-        public void onError(Throwable t) {
-          logger.log(Level.WARNING, "balanceLoad cancelled");
-        }
-
-        @Override
-        public void onCompleted() {
-          responseObserver.onCompleted();
-        }
-      };
+    @Override
+    public void onClose(Exception e) {
+      logger.warning("Error in endpoint watcher: " + e);
     }
     
     public synchronized void setServerList(ImmutableList<InetSocketAddress> servers) {
       serverList = servers;
+    }
+    
+    public synchronized ImmutableList<InetSocketAddress> getServerList() {
+      return serverList;
+    }
+  }
+
+  static class BalanceLoadImpl implements StreamObserver<LoadBalanceRequest>, EventListener<Void> {
+    
+    interface ServerListGetter {
+      ImmutableList<InetSocketAddress> get();
+    }
+    
+    interface UnsubscribeAction {
+      void unsubscribe(BalanceLoadImpl object);
+    }
+    
+    private boolean initialResponseSent = false;
+    private StreamObserver<LoadBalanceResponse> responseObserver;
+    private ServerListGetter serverListGetter;
+    private UnsubscribeAction unsubscribeAction;
+    
+    public BalanceLoadImpl(StreamObserver<LoadBalanceResponse> responseObserver, ServerListGetter serverListGetter, UnsubscribeAction unsubscribeAction) {
+      this.responseObserver = responseObserver;
+      this.serverListGetter = serverListGetter;
+      this.unsubscribeAction = unsubscribeAction;
+    }
+
+    @Override
+    public void onNext(LoadBalanceRequest req) {
+      logger.log(Level.INFO, "received LoadBalanceRequest: " + req);
+      SendLoadBalanceResponse();
+    }
+
+    @Override
+    public void onError(Throwable t) {
+      logger.log(Level.WARNING, "balanceLoad cancelled");
+      unsubscribeAction.unsubscribe(this);
+    }
+
+    @Override
+    public void onCompleted() {
+      responseObserver.onCompleted();
+      unsubscribeAction.unsubscribe(this);
+    }
+    
+    public synchronized void SendLoadBalanceResponse()
+    {
+      LoadBalanceResponse.Builder builder = LoadBalanceResponse.newBuilder();
+      if (!initialResponseSent)
+      {
+        builder.setInitialResponse(InitialLoadBalanceResponse.newBuilder()
+            .setClientStatsReportInterval(Duration.newBuilder().setSeconds(10).build())
+            .build());
+        initialResponseSent = true;
+      }
+
+      ServerList.Builder serverListBuilder = ServerList.newBuilder();
+      for (InetSocketAddress server : serverListGetter.get()) {
+        serverListBuilder.addServers(getServer(server));
+      }
+      builder.setServerList(serverListBuilder.build());
+      LoadBalanceResponse response = builder.build();
+      
+      logger.log(Level.INFO, "sending LoadBalanceResponse: " + response);
+      responseObserver.onNext(response);
+    }
+
+    @Override
+    public void onUpdate(Void unused) {
+      SendLoadBalanceResponse();
     }
 
     private static LoadBalancerOuterClass.Server getServer(InetSocketAddress server) {
