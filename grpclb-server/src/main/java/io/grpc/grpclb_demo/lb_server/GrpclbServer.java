@@ -16,21 +16,22 @@
 
 package io.grpc.grpclb_demo.lb_server;
 
+import com.google.common.collect.ImmutableList;
+import com.google.protobuf.ByteString;
+import grpc.lb.v1.LoadBalancerGrpc;
+import grpc.lb.v1.LoadBalancerOuterClass;
+import grpc.lb.v1.LoadBalancerOuterClass.Duration;
+import grpc.lb.v1.LoadBalancerOuterClass.InitialLoadBalanceResponse;
+import grpc.lb.v1.LoadBalancerOuterClass.LoadBalanceRequest;
+import grpc.lb.v1.LoadBalancerOuterClass.LoadBalanceResponse;
+import grpc.lb.v1.LoadBalancerOuterClass.ServerList;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
-import java.util.logging.Logger;
+import java.net.InetSocketAddress;
 import java.util.logging.Level;
-
-import grpc.lb.v1.LoadBalancerGrpc;
-import grpc.lb.v1.LoadBalancerOuterClass.LoadBalanceRequest;
-import grpc.lb.v1.LoadBalancerOuterClass.LoadBalanceResponse;
-import grpc.lb.v1.LoadBalancerOuterClass.InitialLoadBalanceResponse;
-import grpc.lb.v1.LoadBalancerOuterClass.ServerList;
-import grpc.lb.v1.LoadBalancerOuterClass.Duration;
-import grpc.lb.v1.LoadBalancerOuterClass;
-import com.google.protobuf.ByteString;
+import java.util.logging.Logger;
 
 
 /**
@@ -42,10 +43,30 @@ public class GrpclbServer {
   private Server server;
 
   private void start() throws IOException {
+    final LoadBalancerImpl loadBalancerImpl = new LoadBalancerImpl();
+
+    KubernetesEndpointWatcher endpointWatcher = new KubernetesEndpointWatcher();
+    endpointWatcher.watchEndpoint("default", "greeter-server", new ServerListWatcher() {
+      
+      @Override
+      public void onUpdate(ImmutableList<InetSocketAddress> serverList) {
+        logger.info("Updating server list: " + serverList);
+        loadBalancerImpl.setServerList(serverList);
+      }
+      
+      @Override
+      public void onClose(Exception e) {
+        logger.warning("Error in endpoint watcher: " + e);
+      }
+    });
+
+    //KubernetesApiClient apiClient = new KubernetesApiClient();
+    //loadBalancerImpl.setServerList(apiClient.getEndpointServers("default", "greeter-server"));
+    
     /* The port on which the server should run */
     int port = 9000;
     server = ServerBuilder.forPort(port)
-        .addService(new LoadBalancerImpl())
+        .addService(loadBalancerImpl)
         .build()
         .start();
     logger.info("Server started, listening on " + port);
@@ -85,16 +106,17 @@ public class GrpclbServer {
   }
 
   static class LoadBalancerImpl extends LoadBalancerGrpc.LoadBalancerImplBase {
+    
+    private ImmutableList<InetSocketAddress> serverList = ImmutableList.of();
 
     @Override
     public io.grpc.stub.StreamObserver<LoadBalanceRequest> balanceLoad(
         io.grpc.stub.StreamObserver<LoadBalanceResponse> responseObserver) {
-      
-      
+
       return new StreamObserver<LoadBalanceRequest>() {
 
         private boolean initialResponseSent = false;
-        
+
         @Override
         public void onNext(LoadBalanceRequest req) {
           logger.log(Level.INFO, "LoadBalanceRequest: " + req);
@@ -107,13 +129,23 @@ public class GrpclbServer {
                 .build());
             initialResponseSent = true;
           }
-          // TODO: fill with real servers...
-          builder.setServerList(ServerList.newBuilder()
-              .addServers(LoadBalancerOuterClass.Server.newBuilder()
-                  .setIpAddress(ByteString.copyFrom(new byte[] {10, 0, 0, 24})).setPort(8000).setLoadBalanceToken("abc").build())
-              .addServers(LoadBalancerOuterClass.Server.newBuilder()
-                  .setIpAddress(ByteString.copyFrom(new byte[] {10, 0, 1, 12})).setPort(8000).setLoadBalanceToken("xyz").build())
-              .build());
+          
+          synchronized(this) {
+            ServerList.Builder serverListBuilder = ServerList.newBuilder();
+            for (InetSocketAddress server : serverList) {
+              serverListBuilder.addServers(getServer(server));
+            }
+            builder.setServerList(serverListBuilder.build());
+          }
+          // 
+          //TODO: fill with real servers...
+          //builder.setServerList(ServerList.newBuilder()
+          //    .addServers(LoadBalancerOuterClass.Server.newBuilder()
+          //        .setIpAddress(ByteString.copyFrom(new byte[] {10, 0, 0, 24})).setPort(8000).setLoadBalanceToken("abc").build())
+          //    .addServers(LoadBalancerOuterClass.Server.newBuilder()
+          //        .setIpAddress(ByteString.copyFrom(new byte[] {10, 0, 1, 12})).setPort(8000).setLoadBalanceToken("xyz").build())
+          //    .build());
+          
           responseObserver.onNext(builder.build());
         }
 
@@ -127,6 +159,18 @@ public class GrpclbServer {
           responseObserver.onCompleted();
         }
       };
+    }
+    
+    public synchronized void setServerList(ImmutableList<InetSocketAddress> servers) {
+      serverList = servers;
+    }
+
+    private static LoadBalancerOuterClass.Server getServer(InetSocketAddress server) {
+      // TODO: set balancetoken
+      return LoadBalancerOuterClass.Server.newBuilder()
+          .setIpAddress(ByteString.copyFrom(server.getAddress().getAddress()))
+          .setPort(server.getPort())
+          .build();
     }
   }
 }

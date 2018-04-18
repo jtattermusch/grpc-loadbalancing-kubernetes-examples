@@ -41,6 +41,10 @@ dependencies {
   compile "io.grpc:grpc-netty:${grpcVersion}"
   compile "io.grpc:grpc-protobuf:${grpcVersion}"
   compile "io.grpc:grpc-stub:${grpcVersion}"
+  compile "io.kubernetes:client-java:1.0.0-beta3"
+  compile "io.fabric8:kubernetes-client:3.1.10"
+  compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.5'
+  
 }
 
 protobuf {

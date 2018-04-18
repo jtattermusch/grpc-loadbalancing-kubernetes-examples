@@ -34,4 +34,11 @@ docker build -t gcr.io/grpc-loadbalancing-demo2018/greeter_server_balancer ../gr
 #gcloud container clusters --project=${PROJECT_NAME} --zone=us-central1-a get-credentials demo-cluster-1
 
 
+# "default" service account gets the "view" role (so we can access the API).
+kubectl create rolebinding default-view \
+  --clusterrole=view \
+  --serviceaccount=default:default \
+  --namespace=default
+
+
 kubectl create -f backend-all.yaml
