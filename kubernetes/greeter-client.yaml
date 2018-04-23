@@ -4,6 +4,13 @@ metadata:
   name: greeter-client
 spec:
   containers:
-    - name: greeter-client
-      image: gcr.io/grpc-loadbalancing-demo2018/greeter_client:latest
+  - name: greeter-client
+    image: gcr.io/grpc-loadbalancing-demo2018/greeter_client:latest
+    env:
+    - name: GRPC_TRACE
+      value: "glb,client_channel"
+    - name: GRPC_VERBOSITY
+      value: "debug"
+    #- name: GRPC_DNS_RESOLVER
+    #  value: "ares"
   restartPolicy: Never
