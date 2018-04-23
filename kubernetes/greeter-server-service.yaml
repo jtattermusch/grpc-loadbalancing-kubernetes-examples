@@ -3,8 +3,9 @@ kind: Service
 metadata:
   name: greeter-server
 spec:
-  clusterIP: None  # Headless service
-  #type: LoadBalancer  # Loadbalanced
+  # Make this a headless service so that each endpoint will be exposed
+  # as a separate DNS A record.
+  clusterIP: None
   ports:
   - port: 8000
   selector:

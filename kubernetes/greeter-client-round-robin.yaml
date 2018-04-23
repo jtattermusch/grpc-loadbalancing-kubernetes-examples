@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: greeter-client-round-robin
+spec:
+  containers:
+  - name: greeter-client-round-robin
+    image: gcr.io/grpc-loadbalancing-demo2018/greeter_client_round_robin:latest
+    env:
+    - name: GRPC_VERBOSITY
+      value: "debug"
+  restartPolicy: Never
