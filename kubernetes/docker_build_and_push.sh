@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -ex
+cd $(dirname $0)
+
 # NOTE: Need to run "gcloud auth configure-docker" before we can push the images to gcr.io
 
 # Build docker images & push them to container registry
