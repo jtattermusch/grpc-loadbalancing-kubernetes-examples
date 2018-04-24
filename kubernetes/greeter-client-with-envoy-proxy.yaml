@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: greeter-client-with-envoy-proxy
+spec:
+  containers:
+  - name: greeter-client
+    image: gcr.io/grpc-loadbalancing-demo2018/greeter_client:latest
+    env:
+    # gRPC traffic will be routed through envoy proxy
+    - name: GREETER_SERVICE_TARGET
+      value: "localhost:10000"
+    - name: GRPC_VERBOSITY
+      value: "debug"
+  - name: envoy-proxy
+    image: gcr.io/grpc-loadbalancing-demo2018/envoy_proxy:latest
+  restartPolicy: Never

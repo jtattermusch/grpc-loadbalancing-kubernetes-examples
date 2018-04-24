@@ -5,13 +5,17 @@ metadata:
 spec:
   containers:
   - name: greeter-client-lookaside-lb
-    image: gcr.io/grpc-loadbalancing-demo2018/greeter_client_lookaside_lb:latest
+    image: gcr.io/grpc-loadbalancing-demo2018/greeter_client:latest
     env:
-    - name: GRPC_VERBOSITY
-      value: "debug"
+    # use the grpclb as a lookaside balancer
+    # remove the explicit DNS server address once https://github.com/grpc/grpc/pull/15073 is merged and released.
+    - name: GREETER_SERVICE_TARGET
+      value "dns://10.3.240.10:53/greeter-server-loadbalanced.default.svc.cluster.local:8000"
     # grpclb can only be used with "ares" DNS resolvers
     - name: GRPC_DNS_RESOLVER
       value: "ares"
+    - name: GRPC_VERBOSITY
+      value: "debug"
     # Enable for extra detailed traces
     #- name: GRPC_TRACE
     #  value: "glb,client_channel"

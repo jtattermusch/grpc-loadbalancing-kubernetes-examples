@@ -16,7 +16,8 @@
 # NOTE: Need to run "gcloud auth configure-docker" before we can push the images to gcr.io
 
 # Build docker images & push them to container registry
+docker build -t gcr.io/grpc-loadbalancing-demo2018/greeter_client ../greeter-client && docker push gcr.io/grpc-loadbalancing-demo2018/greeter_client:latest
 docker build -t gcr.io/grpc-loadbalancing-demo2018/greeter_server ../greeter-server && docker push gcr.io/grpc-loadbalancing-demo2018/greeter_server:latest
-docker build -t gcr.io/grpc-loadbalancing-demo2018/greeter_client_round_robin ../greeter-client-round-robin && docker push gcr.io/grpc-loadbalancing-demo2018/greeter_client_round_robin:latest
-docker build -t gcr.io/grpc-loadbalancing-demo2018/greeter_client_lookaside_lb ../greeter-client-lookaside-lb && docker push gcr.io/grpc-loadbalancing-demo2018/greeter_client_lookaside_lb:latest
 docker build -t gcr.io/grpc-loadbalancing-demo2018/greeter_server_balancer ../grpclb-server && docker push gcr.io/grpc-loadbalancing-demo2018/greeter_server_balancer:latest
+docker build -t gcr.io/grpc-loadbalancing-demo2018/envoy_proxy ../envoy-proxy && docker push gcr.io/grpc-loadbalancing-demo2018/envoy_proxy:latest
+

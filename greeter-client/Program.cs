@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using Grpc.Core;
 using Helloworld;
 using System.Threading;
@@ -23,12 +24,19 @@ namespace GreeterClient
     {
         public static void Greet()
         {
-            // Use round-robin load balancing policy
-            var channelOptions = new[] { new ChannelOption("grpc.lb_policy_name", "round_robin") };
+            var channelOptions = new List<ChannelOption> {};
+            var lbPolicyName = Environment.GetEnvironmentVariable("GREETER_LB_POLICY_NAME");
+            if (!string.IsNullOrEmpty(lbPolicyName))
+            {
+                Console.WriteLine("Will use " + lbPolicyName + " load balancing policy");
+                channelOptions.Add(new ChannelOption("grpc.lb_policy_name", lbPolicyName));
+            }
+
+            var channelTarget = Environment.GetEnvironmentVariable("GREETER_SERVICE_TARGET");
+            Console.WriteLine("Creating channel with target " + channelTarget);
 
             // Resolve backend IP using cluster-internal DNS name of the backend service
-            Channel channel = new Channel("greeter-server.default.svc.cluster.local:8000", ChannelCredentials.Insecure, channelOptions);
-            Console.WriteLine("Created new channel, target: " + channel.Target);
+            Channel channel = new Channel(channelTarget, ChannelCredentials.Insecure, channelOptions);
 
             var client = new Greeter.GreeterClient(channel);
             String user = "you";
