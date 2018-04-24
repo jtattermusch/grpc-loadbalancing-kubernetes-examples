@@ -20,13 +20,13 @@ static_resources:
             - name: service1_grpc
               domains: ["*"]
               routes:
-              - match: { prefix: "/" }
-                route: { cluster: service1_grpc }
+              - match: { prefix: "/helloworld.Greeter" }
+                route: { cluster: greeter_service_grpc }
           http_filters:
           - name: envoy.router
             config: {}
   clusters:
-  - name: service1_grpc
+  - name: greeter_service_grpc
     connect_timeout: 5s
     type: STRICT_DNS
     lb_policy: ROUND_ROBIN
