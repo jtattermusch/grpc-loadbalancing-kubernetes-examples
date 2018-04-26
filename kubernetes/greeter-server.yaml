@@ -7,7 +7,11 @@ spec:
   # as a separate DNS A record.
   clusterIP: None
   ports:
-  - port: 8000
+  # Use port name in "<protocol>[-<suffix>]" format, otherwise traffic
+  # coming from istio nodes will silently ignore istio RouteRules.
+  # Setting the port name won't affect any scenarios that are not using istio.
+  - name: grpc
+    port: 8000
   selector:
     app: greeter-server
 ---
