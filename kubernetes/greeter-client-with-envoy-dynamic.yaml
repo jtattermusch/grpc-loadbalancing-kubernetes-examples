@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: greeter-client-with-envoy-dynamic
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: greeter-client-with-envoy-dynamic
+    spec:
+      containers:
+      - name: greeter-client
+        image: gcr.io/grpc-loadbalancing-demo2018/greeter_client:latest
+        env:
+        # Resolve backend IP using cluster-internal DNS name of the backend service
+        # NOTE: We can use a backend service that doesn't itself have istio sidecars
+        # deployed and loadbalancing is still going to work.
+        - name: GREETER_SERVICE_TARGET
+          value: "greeter-server.default.svc.cluster.local:8000"
+        - name: GRPC_VERBOSITY
+          value: "debug"
+
