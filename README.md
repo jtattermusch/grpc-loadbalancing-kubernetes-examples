@@ -36,7 +36,7 @@ $ kubectl get pods
 
 Deploy the client
 ```
-# Deploy the greeter service 
+# Deploy the greeter round robin client
 $ kubectl create -f kubernetes/greeter-client-round-robin.yaml
 ```
 
@@ -65,6 +65,27 @@ Scale up again and watch the client pick up newly added backends.
 # check results later with "kubectl logs greeter-client-round-robin"
 kubectl scale deployment greeter-server --replicas=4
 ```
+
+## Example 2: gRPC Round Robin LB via Envoy proxy (deployed as sidecar)
+
+Shows how to deploy Envoy proxy as a sidecar (2 containers in a single kubernetes pod).
+The Envoy proxy is statically configured to perform round robin loadbalancing
+(see [envoy-proxy](envoy.yaml)).
+
+We assume greeter-server from previous example is already running.
+
+```
+# Deploy the greeter client with envoy proxy as a sidecar
+$ kubectl create -f kubernetes/greeter-client-with-envoy-proxy.yaml
+```
+
+Check that traffic is being load balanced
+```
+# Check logs for greeter-client container from "greeter-client-with-envoy-proxy" pod
+kubectl logs greeter-client-with-envoy-proxy greeter-client
+```
+
+You can try scaling up and down the number of replicas as in previous example.
 
 ## Contents
 
