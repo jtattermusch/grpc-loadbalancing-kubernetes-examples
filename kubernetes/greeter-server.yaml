@@ -1,14 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: greeter-server
+spec:
+  # Make this a headless service so that each endpoint will be exposed
+  # as a separate DNS A record.
+  clusterIP: None
+  ports:
+  - port: 8000
+  selector:
+    app: greeter-server
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: greeter-server
 spec:
-  replicas: 5
+  replicas: 3
   template:
     metadata:
       labels:
-        app: grpclb-demo
-        tier: backend
+        app: greeter-server
     spec:
       containers:
       - name: greeter-server
