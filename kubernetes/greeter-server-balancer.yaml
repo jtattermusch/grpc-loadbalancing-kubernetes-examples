@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: greeter-server-loadbalanced
+spec:
+  clusterIP: None  # Headless service
+  ports:
+  - name: grpclb
+    port: 9000
+  selector:
+    app: greeter-server-loadbalanced
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -7,8 +19,7 @@ spec:
   template:
     metadata:
       labels:
-        app: grpclb-demo
-        tier: balancer
+        app: greeter-server-loadbalanced
     spec:
       containers:
       - name: greeter-server
