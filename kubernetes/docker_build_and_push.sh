@@ -22,5 +22,5 @@ cd $(dirname $0)
 docker build -t gcr.io/grpc-loadbalancing-demo2018/greeter_client ../greeter-client && docker push gcr.io/grpc-loadbalancing-demo2018/greeter_client:latest
 docker build -t gcr.io/grpc-loadbalancing-demo2018/greeter_server ../greeter-server && docker push gcr.io/grpc-loadbalancing-demo2018/greeter_server:latest
 docker build -t gcr.io/grpc-loadbalancing-demo2018/greeter_server_balancer ../grpclb-server && docker push gcr.io/grpc-loadbalancing-demo2018/greeter_server_balancer:latest
-docker build -t gcr.io/grpc-loadbalancing-demo2018/envoy_proxy ../envoy-proxy && docker push gcr.io/grpc-loadbalancing-demo2018/envoy_proxy:latest
+docker build -t gcr.io/grpc-loadbalancing-demo2018/greeter_envoy_static ../greeter-envoy-static && docker push gcr.io/grpc-loadbalancing-demo2018/greeter_envoy_static:latest
 

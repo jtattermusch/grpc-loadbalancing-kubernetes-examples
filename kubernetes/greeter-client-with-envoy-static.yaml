@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: greeter-client-with-envoy-static
+spec:
+  containers:
+  - name: greeter-client
+    image: gcr.io/grpc-loadbalancing-demo2018/greeter_client:latest
+    env:
+    # gRPC traffic will be routed through envoy proxy
+    # Instead of using the proxy address as channel target for greeter client,
+    # we could also use an init container that sets up iptables rules so that
+    # all outgoing traffic from greeter-client is routed through the proxy,
+    # which is essentially what istio proxy does.
+    - name: GREETER_SERVICE_TARGET
+      value: "localhost:10000"
+    #- name: GRPC_VERBOSITY
+    #  value: "debug"
+  - name: envoy-proxy
+    image: gcr.io/grpc-loadbalancing-demo2018/greeter_envoy_static:latest
+  restartPolicy: Never
