@@ -12,6 +12,6 @@ spec:
       value: "greeter-server.default.svc.cluster.local:8000"
     - name: GREETER_LB_POLICY_NAME
       value: "round_robin"
-    - name: GRPC_VERBOSITY
-      value: "debug"
+    #- name: GRPC_VERBOSITY
+    #  value: "debug"
   restartPolicy: Never
