@@ -23,7 +23,7 @@ $ kubernetes/docker_build_and_push.sh
 
 ## Example 1: Round Robin Loadbalancing with gRPC's built-in loadbalancing policy 
 
-gRPC has a round robin loadbalancer built into its clients.
+This example shows how to use gRPC client with its built-in round robin loadbalancer.
 
 First we need to deploy a headless service with multiple backends
 ```
@@ -68,7 +68,7 @@ kubectl scale deployment greeter-server --replicas=4
 
 ## Example 2: Round Robin LB with statically configured Envoy proxy (deployed as sidecar)
 
-Shows how to deploy Envoy proxy as a sidecar (2 containers in a single kubernetes pod).
+This example shows how to deploy Envoy proxy as a sidecar (2 containers in a single kubernetes pod).
 The Envoy proxy is statically configured to perform round robin loadbalancing
 (see [greeter-envoy-static/envoy.yaml](greeter-envoy-static/envoy.yaml)).
 
@@ -86,6 +86,36 @@ kubectl logs greeter-client-with-envoy-static greeter-client
 ```
 
 You can try scaling up and down the number of replicas as in previous example.
+
+## Example 3: Round Robin LB with dynamically configured Envoy proxy
+
+This example shows how to perform loadbalancing via a dynamically configured Envoy proxy.
+The proxy will be deployed as a sidecar and it will obtain the endpoint data from a cluster manager.
+Istio pilot will be used as cluster manager. Note while the client needs to be deployed with a sidecar proxy
+(which performs the loadbalancing) the destination service can be a regular kubernetes service (with no istio-related configuration).
+
+We first need to install istio into our cluster by following 
+https://istio.io/docs/setup/kubernetes/quick-start.html (also see [./prepare_istio.sh](./prepare_istio.sh)).
+
+We assume greeter-server from previous example is already running.
+
+```
+# Deploy greeter client with a sidecar proxy injected by "istioctl kube-inject"
+kubectl apply -f <(istioctl kube-inject -f kubernetes/greeter-client-with-envoy-dynamic.yaml)
+```
+
+Check that traffic is being load balanced
+```
+# See running pods and find one that corresponds to greeter-client-with-envoy-dynamic we just deployed.
+kubectl get pods
+
+# Inspect the logs an verify things are getting loadbalanced (adjust the pod name first)
+kubectl logs greeter-client-with-envoy-dynamic-bb9c86bb5-rgtr9 greeter-client
+```
+
+You can try scaling up and down the number of replicas as in previous example.
+
+You can also try applying istio route rules to traffic with destination service "greeter-server" (e.g. `kubectl apply -f kubernetes/fault-injection-rule-example.yaml`).
 
 ## Contents
 
