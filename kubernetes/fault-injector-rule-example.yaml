@@ -1,0 +1,11 @@
+apiVersion: config.istio.io/v1alpha2
+kind: RouteRule
+metadata:
+  name: test-rule
+spec:
+   destination:
+     name: greeter-server
+   httpFault:
+     abort:
+       percent: 50
+       httpStatus: 400
