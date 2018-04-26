@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: greeter-server-istio
+spec:
+  ports:
+  # Use port name in "<protocol>[-<suffix>]" format, otherwise traffic
+  # coming from istio nodes will silently ignore istio RouteRules.
+  - name: grpc
+    port: 8000
+  selector:
+    app: greeter-server-istio
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: greeter-server-istio
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: greeter-server-istio
+    spec:
+      containers:
+      - name: greeter-server
+        image: gcr.io/grpc-loadbalancing-demo2018/greeter_server:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: GRPC_VERBOSITY
+          value: "debug"
+        - name: MY_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+

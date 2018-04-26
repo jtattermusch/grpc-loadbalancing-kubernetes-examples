@@ -1,0 +1,24 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: greeter-client-istio
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: greeter-client-istio
+    spec:
+      containers:
+      - name: greeter-client
+        image: gcr.io/grpc-loadbalancing-demo2018/greeter_client:latest
+        env:
+        env:
+        # Resolve backend IP using cluster-internal DNS name of the backend service
+        - name: GREETER_SERVICE_TARGET
+          value: "greeter-server-istio.default.svc.cluster.local:8000"
+        - name: GRPC_VERBOSITY
+          value: "debug"
+        #- name: GRPC_TRACE
+        #  value: "tcp,http"
+
