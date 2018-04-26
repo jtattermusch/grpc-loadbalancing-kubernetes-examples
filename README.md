@@ -21,7 +21,7 @@ our kubernetes cluster.
 $ kubernetes/docker_build_and_push.sh
 ```
 
-## Example 1: gRPC Round Robin LB (built-in loadbalancing policy) 
+## Example 1: Round Robin Loadbalancing with gRPC's built-in loadbalancing policy 
 
 gRPC has a round robin loadbalancer built into its clients.
 
@@ -66,30 +66,30 @@ Scale up again and watch the client pick up newly added backends.
 kubectl scale deployment greeter-server --replicas=4
 ```
 
-## Example 2: gRPC Round Robin LB via Envoy proxy (deployed as sidecar)
+## Example 2: Round Robin LB with statically configured Envoy proxy (deployed as sidecar)
 
 Shows how to deploy Envoy proxy as a sidecar (2 containers in a single kubernetes pod).
 The Envoy proxy is statically configured to perform round robin loadbalancing
-(see [envoy-proxy](envoy.yaml)).
+(see [greeter-envoy-static/envoy.yaml](greeter-envoy-static/envoy.yaml)).
 
 We assume greeter-server from previous example is already running.
 
 ```
 # Deploy the greeter client with envoy proxy as a sidecar
-$ kubectl create -f kubernetes/greeter-client-with-envoy-proxy.yaml
+$ kubectl create -f kubernetes/greeter-client-with-envoy-static.yaml
 ```
 
 Check that traffic is being load balanced
 ```
-# Check logs for greeter-client container from "greeter-client-with-envoy-proxy" pod
-kubectl logs greeter-client-with-envoy-proxy greeter-client
+# Check logs for greeter-client container from "greeter-client-with-envoy-static" pod
+kubectl logs greeter-client-with-envoy-static greeter-client
 ```
 
 You can try scaling up and down the number of replicas as in previous example.
 
 ## Contents
 
-- `envoy-proxy`: A statically configured Envoy proxy (to be deployed as a sidecar)
+- `greeter-envoy-static`: A statically configured Envoy proxy (to be deployed together with greeter-client as a sidecar)
 - `greeter-server`: A simple C# greeter server (based on gRPC Helloworld example)
 - `greeter-client`: A simple C# greeter client (based on gRPC Helloworld example)
 - `kubernetes`: configuration for running examples on Kubernetes
