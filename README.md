@@ -95,7 +95,7 @@ Istio pilot will be used as cluster manager. Note while the client needs to be d
 (which performs the loadbalancing) the destination service can be a regular kubernetes service (with no istio-related configuration).
 
 We first need to install istio into our cluster by following 
-https://istio.io/docs/setup/kubernetes/quick-start.html (also see [./prepare_istio.sh](./prepare_istio.sh)).
+https://istio.io/docs/setup/kubernetes/quick-start.html (also see [kubernetes/prepare_istio.sh](kubernetes/prepare_istio.sh)).
 
 We assume greeter-server from previous example is already running.
 
@@ -116,6 +116,30 @@ kubectl logs greeter-client-with-envoy-dynamic-bb9c86bb5-rgtr9 greeter-client
 You can try scaling up and down the number of replicas as in previous example.
 
 You can also try applying istio route rules to traffic with destination service "greeter-server" (e.g. `kubectl apply -f kubernetes/fault-injection-rule-example.yaml`).
+
+## Example 4: Load balancing in Istio service mesh
+
+This example shows load balancing in Istio service mesh. Both the client and server will now have their Envoy proxy sidecars.
+
+We assume you've already installed istio in the previous example.
+
+```
+# Deploy greeter server and client, both with a sidecar proxy injected by "istioctl kube-inject"
+kubectl apply -f <(istioctl kube-inject -f kubernetes/greeter-server-istio.yaml)
+kubectl apply -f <(istioctl kube-inject -f kubernetes/greeter-client-istio.yaml)
+```
+
+```
+# See running pods and find one that corresponds to greeter-client-istio we just deployed.
+kubectl get pods
+
+# Inspect the logs an verify things are getting loadbalanced (adjust the pod name first)
+kubectl logs greeter-client-istio-75c8ff54d8-wfpcc greeter-client
+```
+
+You can try scaling up and down the number of replicas in "greeter-server-istio" deployment.
+
+You can also try applying istio route rules to traffic with destination service "greeter-server-istio".
 
 ## Contents
 
