@@ -10,8 +10,8 @@ spec:
     # gRPC traffic will be routed through envoy proxy
     - name: GREETER_SERVICE_TARGET
       value: "localhost:10000"
-    - name: GRPC_VERBOSITY
-      value: "debug"
+    #- name: GRPC_VERBOSITY
+    #  value: "debug"
   - name: envoy-proxy
     image: gcr.io/grpc-loadbalancing-demo2018/envoy_proxy:latest
   restartPolicy: Never
