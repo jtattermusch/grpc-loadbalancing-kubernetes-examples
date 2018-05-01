@@ -141,9 +141,38 @@ You can try scaling up and down the number of replicas in "greeter-server-istio"
 
 You can also try applying istio route rules to traffic with destination service "greeter-server-istio".
 
+## Example 5: Client Lookaside LB (with dummy grpclb server implementation)
+
+This example shows how to run a gRPC client with lookaside balancing enabled. We will use a very minimal implementation of the grpclb service. 
+
+**NOTE: The purpose of this example is to demonstrate the concept of a lookaside loadbalancing, not to provide a ready-to-use implementation of grpclb server. The grpclb server provided in this example doesn't do anything else than use kubernetes API watch updates to greeter-server replicas available and notify client about these updates (and you probably want something more elaborate for your application - e.g. to incorporate client stats and server load).**
+
+We assume greeter-server from one of the previous examples is already running.
+
+Deploy the balancer service
+```
+kubectl create -f kubernetes/greeter-server-balancer.yaml 
+```
+
+Deploy the client that will connect to the balancer service first and obtain streaming updates about the list of backends available for serving.
+```
+kubectl create -f kubernetes/greeter-client-lookaside-lb.yaml
+```
+
+Check that traffic is being load balanced
+```
+# Check logs for "greeter-client-lookaside-lb" pod
+kubectl logs greeter-client-lookaside-lb
+```
+
+You can try scaling up and down the number of replicas as in previous example.
+
+**Future work:  We plan to add support for Envoy's Universal Data Plane API directly into gRPC clients so that instead of needing to implement your own grpclb server to be able to perform client lookaside LB, you will be able to choose from multiple existing control-plane solutions (e.g. Istio Pilot) that implement the Universal Data Plane API. This effort is currently work in progress.**
+
 ## Contents
 
 - `greeter-envoy-static`: A statically configured Envoy proxy (to be deployed together with greeter-client as a sidecar)
 - `greeter-server`: A simple C# greeter server (based on gRPC Helloworld example)
 - `greeter-client`: A simple C# greeter client (based on gRPC Helloworld example)
+- `grpclb-server`: A dummy implementation of the grpclb protocol.
 - `kubernetes`: configuration for running examples on Kubernetes
