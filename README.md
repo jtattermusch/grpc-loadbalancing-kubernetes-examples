@@ -2,7 +2,7 @@
 
 A collection of simple examples showing how to setup load balancing scenarios for gRPC services deployed on Kubernetes.
 
-TODO: add slides from talk
+Before going through the examples, it is recommended to first take a look at the [Talk Slides: gRPC Loadbalancing on Kubernetes](grpc_loadbalancing_kubernetes_slides.pdf).
 
 ## Prework
 
